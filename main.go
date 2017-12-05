@@ -10,8 +10,7 @@ import (
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/clear", handlers.ClearDB).Methods("POST")
-	router.HandleFunc("/Person", handlers.AddPerson).Methods("POST")
-	router.HandleFunc("relationship", handlers.AddRelationship).Methods("POST")
+	router.HandleFunc("/add", handlers.Add).Methods("POST")
 	router.HandleFunc("/generate-test-data", handlers.GenerateTest).Methods("POST")
 	router.HandleFunc("/graph", handlers.GraphDB).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))

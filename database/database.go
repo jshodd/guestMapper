@@ -21,25 +21,23 @@ type D3Response struct {
 
 // Node is the graph response node
 type Node struct {
-	Id    int    `json:"id"`
-	Title string `json:"caption"`
+	Id     int    `json:"id"`
+	Title  string `json:"caption"`
 }
 
 // Link is the graph response link
 type Link struct {
-	Source int `json:"source"`
-	Target int `json:"target"`
-	Label string `json:"caption"`
+	Source int    `json:"source"`
+	Target int    `json:"target"`
+	Label  string `json:"caption"`
 }
 type Person struct {
-	Id   string
-	Name string
+	Name   string
 }
-
 type Relationship struct {
-	p1       Person
-	p2       Person
-	relation string
+	P1       Person
+	P2       Person
+	Relation string
 }
 
 func ClearDatabase() {
@@ -52,7 +50,7 @@ func CreateNode(person Person) {
 	result, _, _, err := conn.QueryNeoAll("MATCH (n:PERSON {name: {name}}) RETURN n", map[string]interface{}{"name": person.Name})
 	handleError(err)
 	if len(result) == 0 {
-		stmt := fmt.Sprintf("CREATE (%s:PERSON {name: {name}})", person.Id)
+		stmt := fmt.Sprintf("CREATE (:PERSON {name: {name}})")
 		_, err := conn.ExecNeo(stmt, map[string]interface{}{"name": person.Name})
 		handleError(err)
 		fmt.Printf("You Created: %s\n", person.Name)
@@ -68,50 +66,50 @@ func handleError(err error) {
 }
 
 func CreateNodeRelationship(relation Relationship) {
-	result, _, _, err := conn.QueryNeoAll("MATCH (p1:PERSON {name: {p1}})-[r]-(p2:PERSON {name: {p2}}) RETURN r", map[string]interface{}{"p1": relation.p1.Name, "p2": relation.p2.Name})
+	result, _, _, err := conn.QueryNeoAll("MATCH (p1:PERSON {name: {p1}})-[r]-(P2:PERSON {name: {P2}}) RETURN r", map[string]interface{}{"p1": relation.P1.Name, "P2": relation.P2.Name})
 	handleError(err)
 
 	if len(result) == 0 {
 
-		stmt := fmt.Sprintf("MATCH (p1:PERSON {name: {p1}}) MATCH (p2:PERSON {name: {p2}}) CREATE (p1)-[:%s]->(p2)", relation.relation)
-		_, err := conn.ExecNeo(stmt, map[string]interface{}{"p1": relation.p1.Name, "p2": relation.p2.Name})
+		stmt := fmt.Sprintf("MATCH (p1:PERSON {name: {p1}}) MATCH (P2:PERSON {name: {P2}}) CREATE (p1)-[:%s]->(P2)", relation.Relation)
+		_, err := conn.ExecNeo(stmt, map[string]interface{}{"p1": relation.P1.Name, "P2": relation.P2.Name})
 		handleError(err)
-		fmt.Printf("You Created Relation \"%s\" Between %s and %s\n", relation.relation, relation.p1.Name, relation.p2.Name)
+		fmt.Printf("You Created Relation \"%s\" Between %s and %s\n", relation.Relation, relation.P1.Name, relation.P2.Name)
 		return
 	}
-	fmt.Println("That relation already exists!")
+	fmt.Println("That Relation already exists!")
 }
 
 func GenerateTestData() {
-	tasha := Person{"natashaPacifico", "Natasha Pacifico"}
+	tasha := Person{"Natasha Pacifico"}
 	CreateNode(tasha)
 
-	jake := Person{"jacobShodd", "Jacob Shodd"}
+	jake := Person{"Jacob Shodd"}
 	CreateNode(jake)
 
 	CreateNodeRelationship(Relationship{tasha, jake, "Engaged"})
 
-	mike := Person{"mikeShodd", "Mike Shodd"}
+	mike := Person{"Mike Shodd"}
 	CreateNode(mike)
 	CreateNodeRelationship(Relationship{mike, jake, "Father"})
 
-	sara := Person{"saraShodd", "Sara Shodd"}
+	sara := Person{"Sara Shodd"}
 	CreateNode(sara)
 	CreateNodeRelationship(Relationship{sara, jake, "Mother"})
 
-	angie := Person{"angelaPacifico", "Angela Pacifico"}
+	angie := Person{"Angela Pacifico"}
 	CreateNode(angie)
 	CreateNodeRelationship(Relationship{angie, tasha, "Mother"})
 
-	jerry := Person{"jerryPacifico", "Jerry Pacifico"}
+	jerry := Person{"Jerry Pacifico"}
 	CreateNode(jerry)
 	CreateNodeRelationship(Relationship{jerry, tasha, "Father"})
 
-	sam := Person{"samanthaShodd", "Samantha Shodd"}
+	sam := Person{"Samantha Shodd"}
 	CreateNode(sam)
 	CreateNodeRelationship(Relationship{sam, jake, "Sister"})
 
-	niko := Person{"nikoPacifico", "Niko Pacifico"}
+	niko := Person{"Niko Pacifico"}
 	CreateNode(niko)
 	CreateNodeRelationship(Relationship{niko, tasha, "Brother"})
 }
@@ -132,7 +130,7 @@ func ExportGraph(w http.ResponseWriter, req *http.Request) {
 	MATCH
 		(p:PERSON)-[r]->(q:PERSON)
 	RETURN
-		p.name,q.name,type(r)`
+		p.name,q.name,type(r),p.family,q.family`
 
 	stmt, err := conn.PrepareNeo(cypher)
 	if err != nil {
@@ -181,7 +179,7 @@ func ExportGraph(w http.ResponseWriter, req *http.Request) {
 			d3Resp.Nodes = append(d3Resp.Nodes, Node{Id: check2, Title: p2})
 
 		}
-		if (p2 == "Jacob Shodd" || p2 == "Natasha Pacifico") && (p1 == "Jacob Shodd" || p1 == "Natasha Pacifico"){
+		if (p2 == "Jacob Shodd" || p2 == "Natasha Pacifico") && (p1 == "Jacob Shodd" || p1 == "Natasha Pacifico") {
 			r = "Engaged"
 		}
 		d3Resp.Links = append(d3Resp.Links, Link{Source: check1, Target: check2, Label: r})
